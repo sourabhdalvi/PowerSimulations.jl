@@ -262,7 +262,7 @@ end
 #     return references
 # end
 
-function add_reference!(sim::Simulation, ref::Dict, date_run::String, extra_ref::String)
+function add_reference!(sim::Simulation, ref::Dict, extra_ref::String)
     sim.ref.date_ref[1] = sim.daterange[1]
     sim.ref.date_ref[2] = sim.daterange[1]
      for (stage, variables) in ref
@@ -274,7 +274,7 @@ function add_reference!(sim::Simulation, ref::Dict, date_run::String, extra_ref:
                  for run in 1:sim.stages[ix].executions
                      sim.ref.current_time = sim.ref.date_ref[ix]
  
-                         initial_path = joinpath(dirname(dirname(sim.ref.raw)), date_run, "raw_output")
+                         initial_path = sim.ref.raw
                          full_path = joinpath(initial_path, "step-$(s)-stage-$(ix)",
                                      "$(sim.ref.current_time)", "$(extra_ref).feather")
  

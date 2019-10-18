@@ -153,16 +153,11 @@ function load_simulation_results(stage::String,
     @show extra_time_length
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
-        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
-        
-        for n in 1:length(step)
-            step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
-        end
         variable_dict[(variable[l])] = DataFrames.DataFrame()
         
-        for time in date_range
+        for (ix,time) in enumerate(date_df.Date)
             
-            file_path = step_df[step_df.Date .== time, :File_Path][1]
+            file_path = date_df[ix, :File_Path]
             var = Feather.read("$file_path")
             correct_var_length = size(1:(size(var,1) - extra_time_length),1)
             variable_dict[(variable[l])] = vcat(variable_dict[(variable[l])],var[1:correct_var_length,:]) 
