@@ -215,7 +215,7 @@ function make_references(sim::Simulation, date_run::String)
     return references
 end
 
-function add_references!(references::Dict, sim::Simulation, date_run::String, file_names::Array{AbstractString})
+function add_references!(references::Dict, sim::Simulation, date_run::String, file_names::Vector{String})
   
     sim.ref.date_ref[1] = sim.daterange[1]
     sim.ref.date_ref[2] = sim.daterange[1]
