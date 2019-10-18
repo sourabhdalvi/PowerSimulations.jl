@@ -12,6 +12,20 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path:
     return
 end
 
+# taking the outputted files for the variable DataFrame and writing them to a featherfile
+function write_data(results::Dict, save_path::AbstractString, variable::String;kwargs...)
+    file_type = get(kwargs, :file_type, Feather)
+    if file_type == Feather || file_type == CSV
+
+        file_path = joinpath(save_path,"$(variable).$(lowercase("$file_type"))")
+        file_type.write(file_path)
+
+    else
+        error("unsupported file type: $file_type")
+    end
+    return
+end
+
 function write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_name::String; kwargs...)
     if isfile(save_path)
         save_path = dirname(save_path)
@@ -102,6 +116,21 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
     _write_optimizer_log(optimizer_log, path)
     return
 end
+
+function write_model_results(res::OperationModelResults, path::String, results::String)
+    if !isdir(path)
+        @error("Specified path is not valid. Run write_results to save results.")
+    end
+    folder_path = joinpath(path,results)
+    write_data(res.variables, folder_path)
+    write_data(res.optimizer_log, folder_path, "optimizer_log")
+    time = DataFrames.DataFrame(Range = convert.(Dates.DateTime,res.time_stamp[!,:Range]))
+    write_data(time, folder_path, "time_stamp")
+    println("Files written to $folder_path folder.")
+    return
+end
+
+
 
 """ Exports Operational Model Results to a path"""
 function write_model_results(results::OperationModelResults, save_path::String)

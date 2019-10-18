@@ -141,13 +141,13 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     end
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
     references = make_references(sim, date_run)
-    
+
     if (:no_dict in keys(kwargs)) == true
+        return
+    else 
         date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
         references = make_references(sim, date_run)
         return references
-    else 
-        return
     end
 
 end
@@ -211,6 +211,53 @@ function make_references(sim::Simulation, date_run::String)
         
         references["stage-$ix"] = variables
         stage.execution_count = 0 
+    end
+    return references
+end
+
+function add_references!(references::Dict, sim::Simulation, date_run::String, file_names::Array{AbstractString})
+  
+    sim.ref.date_ref[1] = sim.daterange[1]
+    sim.ref.date_ref[2] = sim.daterange[1]
+
+    # references = Dict()
+    for (ix, stage) in enumerate(sim.stages)
+        if stage.key == 2
+            variables = Dict()
+            interval = PSY.get_forecasts_interval(stage.sys)
+            #     variable_names = collect(keys(sim.stages[ix].canonical.variables))
+            for n in 1:length(file_names)
+                variables[file_names[n]] = DataFrames.DataFrame(Date = Dates.DateTime[],
+                                            Step = String[], File_Path = String[])
+            end
+            for s in 1:(sim.steps)
+                for run in 1:stage.executions
+                    sim.ref.current_time = sim.ref.date_ref[ix]
+                    for n in 1:length(file_names)
+                
+                        initial_path = joinpath(dirname(dirname(sim.ref.raw)), date_run, "raw_output")
+                        full_path = joinpath(initial_path, "step-$(s)-stage-$(ix)",
+                                    "$(sim.ref.current_time)", "$(file_names[n]).feather")
+            
+                        if isfile(full_path)
+                            date_df = DataFrames.DataFrame(Date = sim.ref.current_time, 
+                                                            Step = "step-$(s)", File_Path = full_path)
+                            variables[file_names[n]] = vcat(variables[file_names[n]], date_df)
+                        else
+                            println("$full_path, no such file")        
+                            end
+                    end
+                    sim.ref.run_count[s][ix] += 1 
+                    sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
+                    
+                end
+            end
+            for (k,v) in variables
+                push!(references, k => v)
+            end
+        end
+    # references["stage-$ix"] = variables
+    stage.execution_count = 0 
     end
     return references
 end
