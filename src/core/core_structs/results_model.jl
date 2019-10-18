@@ -110,8 +110,12 @@ function _count_time_overlap(stage::String,
             @warn "The given date_range is outside the results time stamp."
         end
     end
-    extra_time_length = size(unique(ref),1)./(length(step)+1)
-    return extra_time_length
+    if length(unique(ref)) == length(ref)
+        return 0.0
+    else
+        extra_time_length = size(unique(ref),1)./(length(step)+1)
+        return extra_time_length
+    end
     end
 
 """
