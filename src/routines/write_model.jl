@@ -52,12 +52,28 @@ function _write_data(canonical::CanonicalModel, save_path::AbstractString; kwarg
     return
 end
 
+function _write_data_(canonical::CanonicalModel, save_path::AbstractString; kwargs...)
+    file_type = get(kwargs, :file_type, Feather)
+    if file_type == Feather || file_type == CSV
+        (k, v) =  (:Price,con(canonical,:CopperPlateBalance))
+        file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+
+        file_type.write(file_path, _result_dataframe_duals(v))
+    else
+        error("unsupported file type: $file_type")
+    end
+    return
+end
+
 function write_data(op_model::OperationModel, save_path::AbstractString; kwargs...)
     _write_data(op_model.canonical, save_path; kwargs...)
     return
 end
 
 function write_data(stage::_Stage, save_path::AbstractString; kwargs...)
+    if stage.key == 2
+        _write_data_(stage.canonical, save_path; kwargs...)
+    end
     _write_data(stage.canonical, save_path; kwargs...)
     return
 end

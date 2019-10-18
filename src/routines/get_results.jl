@@ -51,17 +51,37 @@ end
 
 function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
 
-    result = Array{Float64, length(constraint.axes)}(undef, length(constraint.axes[1]))
-    names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
+    if length(axes(constraint)) == 1
+        result = Vector{Float64}(undef, length(first(constraint.axes)))
 
-    for (ix, name) in enumerate(constraint.axes[1])
-        try result[ix] = JuMP.dual(constraint[name])
-        catch
-            result[ix] = NaN
+        for t in constraint.axes[1]
+            try result[t] = JuMP.dual(constraint[t])
+            catch
+                result[t] = NaN
+            end
         end
-    end
 
-    return DataFrames.DataFrame(Price = result)
+        return DataFrames.DataFrame(var = result)
+
+    elseif length(axes(constraint)) == 2
+
+        result = Array{Float64, length(variable.axes)}(undef, length(constraint.axes[2]), length(constraint.axes[1]))
+        names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
+
+        for t in constraint.axes[2], (ix, name) in enumerate(constraint.axes[1])
+            try result[t, ix] = JuMP.dual(constraint[name, t])
+            catch
+                result[t, ix] =  NaN
+            end
+            names[ix] = Symbol(name)
+        end
+
+        return DataFrames.DataFrame(result, names)
+
+    else
+        error("Dimension Number $(length(axes(constraint))) not Supported")
+
+    end
 
 end
 
