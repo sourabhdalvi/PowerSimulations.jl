@@ -150,7 +150,6 @@ function load_simulation_results(stage::String,
     extra_time_length = _count_time_overlap(stage, step,
                                             date_range, variable,
                                             references)
-    @show extra_time_length
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
         variable_dict[(variable[l])] = DataFrames.DataFrame()
