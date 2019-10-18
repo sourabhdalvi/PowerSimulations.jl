@@ -80,27 +80,17 @@ end
 # that is unique to that step and not overlapping with the next.
 
 function _count_time_overlap(stage::String,
-                            step::Array,
-                            date_range::StepRange,
                             variable::Array, 
                             references::Dict{Any,Any})
 
     
     date_df = references[stage][variable[1]]
-    step_df = DataFrames.DataFrame(Date = Dates.DateTime[], 
-                                   Step = String[], 
-                                   File_Path = String[])
-    
-    for n in 1:length(step)
-        step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
-        
-    end
     ref = DataFrames.DataFrame()
     
-    for time in date_range
+    for (ix,time) in enumerate(date_df.Date)
         
         try
-            file_path =  step_df[step_df.Date .== time, :File_Path][1]
+            file_path =  date_df[ix, :File_Path]
             time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
             temp_time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
             t = size(temp_time_stamp, 1)
@@ -110,8 +100,12 @@ function _count_time_overlap(stage::String,
             @warn "The given date_range is outside the results time stamp."
         end
     end
-    extra_time_length = size(unique(ref),1)./(length(step)+1)
-    return extra_time_length
+    if size(unique(ref),2) == size(ref,2)
+        return 0.0
+    else
+        extra_time_length = size(unique(ref),1)./(length(step)+1)
+        return extra_time_length
+    end
     end
 
 """
@@ -134,31 +128,23 @@ results = load_simulation_results(stage,step, date_range, variable, references)
 ```
 """
 function load_simulation_results(stage::String,
-                                 step::Array,
-                                 date_range::StepRange,
-                                 variable::Array, 
                                  references::Dict{Any,Any};
                                  kwargs...)
 
     
     variable_dict = Dict()
+    variable = collect(keys(references[stage]))
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
-    extra_time_length = _count_time_overlap(stage, step,
-                                            date_range, variable,
+    extra_time_length = _count_time_overlap(stage,
+                                            variable,
                                             references)
-
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
-        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
-        
-        for n in 1:length(step)
-            step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
-        end
         variable_dict[(variable[l])] = DataFrames.DataFrame()
         
-        for time in date_range
+        for (ix,time) in enumerate(date_df.Date)
             
-            file_path = step_df[step_df.Date .== time, :File_Path][1]
+            file_path = date_df[ix, :File_Path]
             var = Feather.read("$file_path")
             correct_var_length = size(1:(size(var,1) - extra_time_length),1)
             variable_dict[(variable[l])] = vcat(variable_dict[(variable[l])],var[1:correct_var_length,:]) 
@@ -173,13 +159,13 @@ function load_simulation_results(stage::String,
         
     end
     
-    first_file = references[stage][variable[1]]
-    file_path = first_file[first_file.Date .== date_range[1], :File_Path][1]
-    opt_file_path = joinpath(dirname(file_path),"optimizer_log.feather")
-    optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$opt_file_path"),true))
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
+    # first_file = references[stage][variable[1]]
+    # file_path = first_file[first_file.Date .== date_range[1], :File_Path][1]
+    # opt_file_path = joinpath(dirname(file_path),"optimizer_log.feather")
+    optimizer = Dict{Symbol, Any}()
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => 0.0)
     results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)
-
+    file_path = references[stage][variable[1]][1,:File_Path]
     if (:write in keys(kwargs)) == true
         write_model_results(results, dirname(dirname(dirname(dirname(file_path)))),"results")
     end
