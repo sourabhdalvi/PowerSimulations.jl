@@ -92,6 +92,7 @@ export run_sim_model!
 export write_op_model
 export write_model_results
 export load_operation_results
+export load_simulation_results
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
