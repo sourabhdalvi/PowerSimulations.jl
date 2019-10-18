@@ -102,6 +102,11 @@ sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
 verbose = true, system_to_file = false)
 run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
+
+Accepted Key Words
+`no_dict::Bool = true`: if :no_dict is true a reference dictionary is not created.
+if no_dict is not used or it's false, a reference dictionary is created.
+
 """
 function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     
@@ -137,7 +142,13 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
     references = make_references(sim, date_run)
     
-    return references
+    if (:no_dict in keys(kwargs)) == true
+        date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
+        references = make_references(sim, date_run)
+        return references
+    else 
+        return
+    end
 
 end
 """ 
