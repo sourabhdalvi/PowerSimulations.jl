@@ -103,11 +103,10 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PS
 
     current_counter = time_cache[:count]
     last_status = round(time_cache[:status])
-    var_status = round(var_value) > 1e-2 ? 1.0 : 0.0
+    var_status = round(var_value) > 1e-3 ? 1.0 : 0.0
     if !(abs(last_status - var_status) < 1e-1)
         @warn(" Assertion Error in Calculating Initial Conditions ;last_status = $last_status & var_status = $var_status")
-        @show ic
-        @show initial_condition_key
+        @show var_value
     end
     # @assert abs(last_status - var_status) < eps()
 
@@ -130,11 +129,10 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD
 
     current_counter = time_cache[:count]
     last_status = round(time_cache[:status])
-    var_status = round(var_value) >  1e-2 ? 1.0 : 0.0
+    var_status = round(var_value) >  1e-3 ? 1.0 : 0.0
     if !(abs(last_status - var_status) < 1e-1)
         @warn(" Assertion Error in Calculating Initial Conditions ;last_status = $last_status & var_status = $var_status")
-        @show ic
-        @show initial_condition_key
+        @show var_value
     end
     # @assert abs(last_status - var_status) < eps()
 
